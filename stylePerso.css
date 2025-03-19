@@ -1,0 +1,10 @@
+.reveal .slide-logo {
+  max-height: 100px !important;  /* Ajuste la hauteur */
+  width: auto !important;        /* Garde les proportions */
+  position: static !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 1000 !important;
+}
+
+

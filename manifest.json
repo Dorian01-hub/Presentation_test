@@ -1,9 +1,0 @@
-{
-  "quarto": {
-    "version": "1.4.4"
-  },
-  "dependencies": {
-    "r": "4.4.1"
-  },
-  "output_dir": "_site"
-}

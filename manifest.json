@@ -15,7 +15,8 @@
       "leaflet",        
       "gt",            
       "htmlwidgets",    
-      "echarts4r"       
+      "echarts4r",
+      "renv"
     ]
   },
   "output_dir": "_site" 

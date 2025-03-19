@@ -3,20 +3,20 @@
     "version": "1.4.4"
   },
   "r": {
-    "version": "4.4.1"  // Remplace par la version de R que tu utilises
+    "version": "4.4.1" 
   },
   "dependencies": {
     "r": [
-      "ggplot2",        // Pour les graphiques
-      "dplyr",          // Partie du tidyverse pour la manipulation de données
-      "tidyr",          // Partie du tidyverse pour le nettoyage de données
-      "stringr",        // Manipulation de chaînes de caractères
-      "sf",             // Pour la manipulation de données géospatiales
-      "leaflet",        // Pour des cartes interactives
-      "gt",             // Pour la création de tableaux
-      "htmlwidgets",     // Pour intégrer des widgets interactifs dans R
-      "echarts4r"       // Pour les graphiques interactifs avec ECharts
+      "ggplot2",        
+      "dplyr",          
+      "tidyr",          
+      "stringr",        
+      "sf",             
+      "leaflet",        
+      "gt",            
+      "htmlwidgets",    
+      "echarts4r"       
     ]
   },
-  "output_dir": "_site"  // Dossier où les fichiers générés seront placés
+  "output_dir": "_site" 
 }

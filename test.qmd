@@ -32,6 +32,7 @@ execute:
   echo: false
   warning: false
   cache: false
+output-file: index.html  # <-- important pour Posit Connect
 editor:
   render-on-save: true
 ---

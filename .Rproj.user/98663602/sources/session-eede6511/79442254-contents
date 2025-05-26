@@ -1,0 +1,1 @@
+rsconnect::writeManifest(appDir = ".", appPrimaryDoc = "test.qmd")

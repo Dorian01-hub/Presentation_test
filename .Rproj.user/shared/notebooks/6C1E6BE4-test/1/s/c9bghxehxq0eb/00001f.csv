@@ -1,0 +1,6 @@
+"0","d_iaa_ul = readRDS(""d_iaa_ul.rds"") %>% collect()
+"
+"1","[1m[33mError[39m in `compute.arrow_dplyr_query()`:[22m
+[33m![39m Invalid <FileSystemDataset>, external pointer to null
+[90mRun `]8;;x-r-run:rlang::last_trace()rlang::last_trace()]8;;` to see where the error occurred.[39m
+"

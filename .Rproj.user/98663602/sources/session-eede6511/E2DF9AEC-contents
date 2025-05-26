@@ -1,0 +1,499 @@
+---
+format:
+  revealjs:
+    scrollable: FALSE
+    css: stylePerso.css
+    logo: logoMASA.png   # Add this line
+   
+    # Optional: Control logo behavior
+    slide-number: true                 # Optional: Shows slide numbers
+    show-slide-number: "all"
+    math: mathjax           # Optional: Where to show numbers
+
+title: "Etude des coopératives de l'industrie agroalimentaire"
+subtitle: "Comparaison avec les entreprises non coopératives"
+date: today
+date-format: "DD/MM/YYYY"
+author: "SSP/SDSAFA/BSIAA/Pôle statistiques sectorielles et enquêtes thématiques"
+description: |
+  Décrire ici le contenu de votre présentation
+
+slide-tone: FALSE
+chalkboard: TRUE
+transition: slide
+fig-cap-location: bottom
+
+toc: true
+toc-title: Sommaire
+toc-depth: 1
+toc-float: true
+
+execute:
+  echo: false
+  warning: false
+  cache: false
+editor:
+  render-on-save: true
+---
+
+```{r}
+#| eval: TRUE
+#| echo: FALSE
+#| label: "IAA"
+#| fig-cap: "légende du bloc"
+#| message: FALSE
+
+if (!require(tidyverse)) install.packages("tidyverse")
+if (!require(echarts4r)) install.packages("echarts4r")
+if (!require(ggplot2))     install.packages("ggplot2")
+if (!require(stringr))     install.packages("stringr")
+if (!require(sf))  install.packages("sf")
+if (!require(knitr))     install.packages("knitr")
+if (!require(leaflet))    install.packages("leaflet")
+if (!require(gt))  install.packages("gt")
+if (!require(DT))             install.packages("DT")
+if (!require(htmlwidgets))             install.packages("htmlwidgets")
+
+
+
+library(tidyverse)   # manip. données
+library(ggplot2) # graphiques
+library(sf)      # carto.
+library(leaflet) # carto.
+library(gt)      # formatage tableaux
+library(stringr)
+
+
+# un theme ggplot utilisant la typographie Marianne
+theme_masa <- function(...) {
+  theme_grey(...) %+replace%
+    theme(
+      text = element_text(family = "Marianne"))
+}
+
+
+
+d2 <- readRDS("ep_merge.rds") %>% filter(iaa == TRUE & année == "2022") %>%  mutate(acti3=substr(ape_diff, 1, 3),coopérative = coopérative_co,
+                                                                                               classe = classe_co)
+
+
+d <- readRDS("ul_merge.rds") %>% filter(année == "2022") |>   mutate(acti3=substr(ape_diff, 1, 3),coopérative = coopérative_co,
+                                                                                               classe = classe_co)
+
+d_iaa_ul = readRDS("d_iaa_ul.rds") 
+d_cga_ul = readRDS("d_cga_ul.rds")
+
+d_iaa_ul %>% view()
+
+### stat sur l'ensemble iaa (iaa + cga)
+global <- d2 %>% filter(iaa == TRUE) %>% group_by(coopérative) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2)) %>% as.data.frame
+rownames(global) = global$coopérative
+
+nbr_grp_coop <- d2 %>% filter(classe == "tête de groupe coop") %>% count(id_tg) %>% dim()
+nbr_grp_coop <- nbr_grp_coop[1]
+
+
+
+### stat iaa
+#################################################################################################################################
+summary <- d2 %>% filter(iaa == TRUE & activite == "IAA") %>% group_by(coopérative) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2),unité_pourcentage = round(unité/sum(unité)*100,2))
+
+summary2 <- d2 %>% filter(iaa == TRUE & activite == "IAA") %>% group_by(classe) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2))
+
+nom_iaa <- d2 %>% filter(classe == "tête de groupe coop" & activite == "IAA") %>%
+  select(`chiffre d'affaires`,denom,siren) %>% arrange(desc(`chiffre d'affaires`)) %>%
+  head(5) %>% select(denom) %>% as.vector
+nom_iaa$denom <- str_to_title(tolower(nom_iaa$denom))
+nbr_grp_iaa <- d_iaa_ul %>% count(id_tg) %>% filter(id_tg != "")
+
+
+
+summary3 <- d_iaa_ul %>% group_by(coop) %>%
+  summarise(unité = n(),sum_ca = round(sum(redi_r310)/1000,2),sum_sala_etp = sum(redi_e200)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2))
+###############################################################################################################################
+### stat iaa
+
+
+
+
+
+
+
+
+### stat cga
+#################################################################################################################################
+summary4 <- d2 %>% filter(iaa == TRUE & activite == "CGA") %>% group_by(coopérative) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2),unité_pourcentage = round(unité/sum(unité)*100,2)) %>% as.data.frame
+rownames(summary4) = summary4$coopérative
+
+
+summary5 <- d2 %>% filter(iaa == TRUE & activite == "CGA") %>% group_by(classe) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2)) %>% as.data.frame
+rownames(summary5) = summary5$classe
+
+
+nom_cga <- d2 %>% filter(classe == "tête de groupe coop" & activite == "CGA") %>%
+  select(`chiffre d'affaires`,denom,siren) %>% arrange(desc(`chiffre d'affaires`)) %>%
+  head(5) %>% select(denom) %>% as.vector
+nom_cga$denom <- str_to_title(tolower(nom_cga$denom))
+nbr_grp_cga <- d_cga_ul %>% count(id_tg) %>% filter(id_tg != "")
+
+
+
+summary6 <- d_cga_ul %>% group_by(coop) %>%
+  summarise(unité = n(),sum_ca = round(sum(redi_r310)/1000,2),sum_sala_etp = sum(redi_e200)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2)) %>% as.data.frame
+rownames(summary6) = as.character(summary6$coop)
+
+
+
+summary7 <- d2 %>% filter(acti3 == "462") %>%  group_by(coopérative) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2)) %>% as.data.frame
+rownames(summary7) = as.character(summary7$coopérative)
+
+
+
+summary8 <- d2 %>% filter(acti3 == "463") %>%  group_by(coopérative) %>%
+  summarise(unité = n(),sum_ca = round(sum(`chiffre d'affaires`)/1000,2),sum_sala_etp = sum(`effectif salarié etp`)) %>% mutate(ca_pourcentage = round(sum_ca/sum(sum_ca)*100,2),salarie_etp_pourcentage = round(sum_sala_etp/sum(sum_sala_etp)*100,2)) %>% as.data.frame
+rownames(summary8) = as.character(summary7$coopérative)
+
+
+
+
+
+
+###############################################################################################################################
+### stat cga
+
+```
+
+# Introduction
+
+## A-Définition et différences avec les entreprises de droit privé
+
+-   Une coopérative est une entreprise formée de plusieurs collaborateurs. Chaque coopérateur possède le même pouvoir de décision.
+
+-   Le but de la coopérative est de maximiser la rémunération des adhérents et non le profit des actionnaires.
+
+-   La coopérative ne peut ni ouvrir son capital ni proposer ses services à des entités extérieures à la coopérative.
+
+## B-Contexte et champs des coopératives
+
+-   Coopératives agricoles de l'industrie agroalimentaire et du commerce de gros hors artisanat commercial. Ce sont les activités correspondant aux code ape 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 462 et 463.
+
+-   On repère trois types de coopératives agricoles: les sociétés de coopération agricole (SCA), les sociétés d'intérêt collectif agricole (SICA) et les unions de coopératives.
+
+-   Sont considérées comme coopérative les filiales des groupes coopératifs pour évaluer le réel impact du secteur coopératif.
+
+# 1-Premier état des lieux sur l'année 2022
+
+Les coopératives: `{r} global %>% filter(coopérative == "coopérative") %>% select(ca_pourcentage)` % du chiffre d’affaires de la transformation agroalimentaire et `{r} global %>% filter(coopérative == "coopérative") %>% select(salarie_etp_pourcentage)` % de l'emploi salarié etp.
+
+## A-L'industrie agroalimentaire
+
+-   `{r} sum(summary$unité)` entreprises, dont `{r} summary %>% filter(coopérative == "coopérative") %>% select(unité)` coopératives qui représentent `{r} summary %>% filter(coopérative == "coopérative") %>% select(ca_pourcentage)` % du chiffre d’affaires (`{r} summary %>% filter(coopérative == "coopérative") %>% select(sum_ca) %>% as.character` millions en 2022) et `{r} summary %>% filter(coopérative == "coopérative") %>% select(salarie_etp_pourcentage) %>% as.character` % de l’emploi salarié.
+
+-   `{r} sum(d2[d2$activite == "IAA",]$coop_type == "Société coopérative agricole")` SCA, `{r} sum(d2[d2$activite == "IAA",]$coop_type == "Union de coopértive")` Unions de coopératives et `{r} sum(d2[d2$activite == "IAA",]$coop_type == "Sica")` SICA.
+
+-   Les coopératives indépendantes pèsent peu: `{r} summary2 %>% filter(classe == "coop indépendante") %>% select(unité)` coopératives et `{r} summary2 %>% filter(classe == "coop indépendante") %>% select(ca_pourcentage) %>% as.character` % du chiffre d’affaires contre `{r} summary2 %>% filter(classe == "tête de groupe coop") %>% select(ca_pourcentage) %>% as.character` % pour les `{r} dim(nbr_grp_iaa)[1]` groupes coopératifs des IAA.
+
+------------------------------------------------------------------------
+
+-   Les 5 plus grands groupes coopératifs sont `{r} paste(nom_iaa$denom[1:4],collapse = ", ")` et `{r} nom_iaa$denom[5]`
+
+-   Les groupes coopératifs des IAA détiennent des filiales elles-mêmes coopératives ou des filiales non coopératives. Les `{r} dim(nbr_grp_iaa)[1]` groupes coopératifs détiennent `{r} dim(d_iaa_ul)[1]` filiales, dont `{r} round(sum(d_iaa_ul$coop == FALSE,na.rm = TRUE)/dim(d_iaa_ul)[1]*100,2)` % sont non coopératives, qui réalisent `{r} summary3 %>% filter(coop == FALSE) %>% select(ca_pourcentage) %>% as.character` % du chiffre d’affaires, et concentrent `{r} summary3 %>% filter(coop == FALSE) %>% select(salarie_etp_pourcentage) %>% as.character` % de l’emploi salarié de ces groupes.
+
+## B-Le commerce de gros
+
+-   `{r} sum(summary4$unité)` entreprises en 2022 dont `{r} summary4["coopérative","unité"]` coopératives qui représentent `{r} summary4["coopérative","ca_pourcentage"]` % du chiffre d’affaires et `{r} summary4["coopérative","salarie_etp_pourcentage"]` % de l’emploi salarié.
+
+-   `{r} sum(d2[d2$activite == "CGA",]$coop_type == "Société coopérative agricole")` SCA, `{r} sum(d2[d2$activite == "CGA",]$coop_type == "Union de coopértive")` Unions de coopératives et `{r} sum(d2[d2$activite == "CGA",]$coop_type == "Sica")` SICA.
+
+-   Les coopératives indépendantes pèsent peu: `{r} summary5 %>% filter(classe == "coop indépendante") %>% select(unité)` coopératives et `{r} summary5 %>% filter(classe == "coop indépendante") %>% select(ca_pourcentage) %>% as.character` % du chiffre d’affaires) contre `{r} summary5 %>% filter(classe == "tête de groupe coop") %>% select(ca_pourcentage) %>% as.character` % pour les `{r} dim(nbr_grp_cga)[1]` groupes coopératifs des CGA.
+
+------------------------------------------------------------------------
+
+-   Les 5 plus grands groupes coopératifs sont `{r} paste(nom_cga$denom[1:4],collapse = ", ")` et `{r} nom_cga$denom[5]`.
+
+-   Les filiales non coopératives des groupes coopératifs représentent `{r} round(sum(d_cga_ul$coop == FALSE,na.rm = TRUE)/dim(d_cga_ul)[1]*100,2)` % des filiales, `{r} summary6["FALSE","ca_pourcentage"]` % de leur chiffre d’affaires, et `{r} summary6["FALSE","salarie_etp_pourcentage"]` % de leur emploi salarié.
+
+-   Les coopératives sont davantage présentes en amont de la production agricole (code ape 462), c’est-à-dire dans le commerce de gros de produits bruts et d’animaux vivants, où elles pèsent `{r} summary7["coopérative","ca_pourcentage"]` % du chiffre d’affaires, que dans le commerce de gros de produits alimentaires et boissons (`{r} summary8["coopérative","ca_pourcentage"]` % du chiffre d’affaires).
+
+```{r}
+#| eval: TRUE
+#| echo: FALSE
+#| label: "tableau1"
+#| fig-cap: "légende du bloc"
+#| message: FALSE
+
+
+table <- d  %>% group_by(activite,coopérative) %>% summarise(unité = n(), sum_ca = round(sum(`chiffre d'affaires`)/1000,2),salarie_etp = round(sum(`effectif salarié etp`),2),.groups = "drop") %>% as.data.frame %>% group_by(activite) %>% mutate(across(where(is.numeric),\(x) sum(x,na.rm = TRUE),.names = "sum_acti_{col}")) %>% filter(coopérative == "coopérative") %>% as.data.frame
+
+rownames(table) = table$activite
+
+
+
+```
+
+## Nombre d'entreprise selon l'activité
+
+
+
+<iframe src="graphique0_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Chiffre d'affaires selon l'activité
+
+
+
+<iframe src="graphique_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Chiffre d'affaires en moyenne
+
+
+
+<iframe src="graphique1_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Valeur ajoutée selon l'activité
+
+<iframe src="graphique2_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Résultat selon l'activité
+
+
+
+<iframe src="graphique3_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Dette selon l'activité
+
+
+
+
+<iframe src="graphique4_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+## Taux de marge selon l'activité
+
+
+
+<iframe src="graphique5_interactif.html" width="100%" height="90%" frameborder="0">
+
+</iframe>
+
+
+
+
+## C-Difficultés et limites
+
+-   Certaines coopératives détiennent de façon conjointe des entreprises non coopératives. Elles ne font pas partie des groupes coopératifs car ne sont pas détenues par un acteur majoritaire, mais elles font cependant partie du champ coopératif, car leur centre de décision est un ensemble de coopératives. Impossibilité de quantifier avec exactitude leur nombre car lifi met en évidence les taux d'appartenances d'une entreprise à une autre lorsqu'il y a une détention majoritaire (50%).
+
+-   Pas de donnée sur la rémunération des adhérents que ce soit avec les ristournes ou avec les matières premières.
+
+# 2-Regroupement d'activité
+
+-   Certaines activités comme la 102 (poisson) ou la 107 (boulangerie) ont très peu de coopératives voir 0
+
+-   Utile pour l'analyse économétrique car certains coefficients ne seront pas calculables
+
+-   Certaines activités sont en général toujours représentées seules comme la 101 et la 105
+
+## A-Méthode utilisée pour le regroupement
+
+-   ACP effectuée sur les données économiques agrégées au niveau des activités (beaucoup de variables quantitatives)
+
+-   Classification sur les composantes
+
+-   Enlever les activités qui ont été classées seules
+
+-   Puis refaire une classification sur les données agrégées au niveau de l'activité par classe pour former des regroupements en fonction des caractéristiques des coopératives
+
+## B-Résultat
+
+-   Les activités classées seules sont la viande, les boissons, le lait et les deux commerces de gros
+
+-   Les activités 106 (travail du grain) et 107 (boulangerie) sont regroupées ensembles
+
+-   Les activités 102 (poisson), 103 (fruits et légumes), 104 (huiles et graisses), 108 (autres produits alimentaires) et 109 (aliments pour animaux) ensembles
+
+# 3-Comparaison des performances financières
+
+## A-Choix des indicateurs financiers comparables
+
+Impossibilité d'utiliser les indicateurs classiques comme la valeur ajoutée ou l'ebe à cause des spécificités des coopératives
+
+Les principaux indicateurs choisis sont:
+
+-   La capacité d'autofinancement divisée par le chiffre d'affaires
+
+-   Investissement divisé par le chiffre d'affaires
+
+## B-Modélisation économétrique
+
+-   $$\scriptsize
+    \frac{\text{caf}_i}{\text{CA}_i} = \beta_0 + \beta_1 \text{Coop}_i + \beta_2 \text{Groupe}_i + \beta_3 (\text{Coop}_i \times \text{Groupe}_i) + \beta_{\text{Contrôles}_i} + \epsilon_i
+    $$
+
+-   $$\scriptsize
+    \frac{\text{investissement}_i}{\text{CA}_i} = \beta_0 + \beta_1 \text{Coop}_i + \beta_2 \text{Groupe}_i + \beta_3 (\text{Coop}_i \times \text{Groupe}_i) + \beta_{\text{Contrôles}_i} + \epsilon_i
+    $$
+
+$$\scriptsize
+\hspace{0pt}
+\begin{aligned}
+&caf_i = \text{capacité d'autofinancement } \\ &CA_i = \text{chiffre d'affaires} \\
+&Coop_i = \text{entreprise coopérative ou non } \\ &Groupe_i = \text{entreprise appartient à un groupe ou non} \\
+&\beta_{\text{Contrôles}_i} = \text{Variables de contrôle et leur coefficient associé}
+\end{aligned}
+$$
+
+## C-Choix des variables de contrôles
+
+-   Elles permettent d'éviter d'attribuer faussement un effet à la variable d'intérêt qui est ici coop.
+
+-   Variables de contrôles choisies sont la catégorie d'entreprise, l'activité exercé et si l'entreprise est monoactive ou multiactive.
+
+-   Je n'ai pas encore la part des filliales coopératives, elle sera ajoutée prochainement.
+
+## D-Résultat du modèle simple
+
+```{r}
+#| class-output: text
+
+
+
+library(stargazer)
+
+## j'importe la base en ep 
+
+
+
+
+
+d2 <- d2 %>% mutate(caf_ca = ifelse(caf < 0 & `chiffre d'affaires` < 0,-(caf/`chiffre d'affaires`),caf/`chiffre d'affaires`),invest_ca = ifelse(investissement < 0 & `chiffre d'affaires` < 0 ,-(investissement/`chiffre d'affaires`),investissement/`chiffre d'affaires`),charge_ca = ifelse(`charge-amortissement` < 0 & `chiffre d'affaires` < 0,-(`charge-amortissement`/`chiffre d'affaires`),(`charge-amortissement`/`chiffre d'affaires`)),dette_fonds_propres = ifelse(`dettes financières` < 0 & (`autres fonds propres`+ CP) <0 ,-(`dettes financières`/ (`autres fonds propres`+ CP)),`dettes financières`/ (`autres fonds propres`+ CP)),vaht_ca = VAHT/`chiffre d'affaires`,ebe_ca =  ebe/`chiffre d'affaires`)
+ 
+var_dépendantes2 <- c("caf_ca","invest_ca","dette_fonds_propres","charge_ca","vaht_ca","ebe_ca")
+
+d2[d2 == Inf] <- 0
+d2[d2 == -Inf] <- 0
+
+
+d2 <- d2 %>% filter(acti3 %in% c(101,102,103,104,105,106,107,108,109,110,462,463)) %>%
+  mutate(groupe = ifelse(classe %in% c("tête de groupe coop","tête de groupe non coop"),1,0),étrangère = ifelse(classe %in% c("tête de groupe étrangère"),1,0),
+         acti = case_when(acti3 %in% c("102","103","104","108","109") ~ "100",
+                          acti3 %in% c("106","107") ~ "167",
+                          TRUE ~ acti3),coop = ifelse(coopérative == "coopérative",1,0),micro = ifelse(categorie_entreprise == "MICRO",1,0),
+         activité_multiple = ifelse(activité_multiple == "multi_activité",1,0))
+
+modèle7 = list()
+
+for (y in setdiff(var_dépendantes2,c("charge_ca","ebe_ca","vaht_ca","dette_fonds_propres"))){
+  
+  formula <- as.formula(paste(y, "~ coop + groupe + I(coop*groupe) + categorie_entreprise + étrangère + acti + étrangère + activité_multiple
+"))
+  
+  modèle7[[y]] <- lm(formula,data = d2[d2$`chiffre d'affaires` >= 1 & d2[,y] >=0 & d2[,y] <=1 ,])
+  
+}
+
+
+
+stargazer(modèle7, type = "text", 
+                align = TRUE, font.size = "small")
+
+
+```
+
+------------------------------------------------------------------------
+
+**Effet de coopérative sur la capacité d'autofinancement**
+
+-   être une coopérative entraîne une diminution de 5,5% pour les entreprises indépendantes
+
+-   être une coopérative entraîne une diminution de 3,2% pour les entreprises qui appartiennent à un groupe
+
+**Effet de coopérative sur l'investissement**
+
+-   être une coopérative entraîne une diminution de 7,4% pour les entreprises indépendantes
+
+-   être une coopérative entraîne une diminution de 0,7% pour les entreprises qui appartiennent à un groupe
+
+## E-Résultat du modèle à interaction
+
+```{r}
+#| class-output: text
+
+for (y in setdiff(var_dépendantes2,c("charge_ca","ebe_ca","vaht_ca","dette_fonds_propres"))){
+  
+  formula <- as.formula(paste(y, "~ coop*groupe*micro + étrangère + acti + étrangère + activité_multiple"))
+  
+  modèle7[[y]] <- lm(formula,data = d2[d2$`chiffre d'affaires` >= 1 & d2[,y] >=0 & d2[,y] <=1 ,])
+  
+}
+
+
+
+
+
+
+
+stargazer(modèle7, type = "text", 
+                align = TRUE, font.size = "small")
+
+
+
+  
+
+
+
+
+
+
+```
+
+------------------------------------------------------------------------
+
+**Effet de coopérative sur la capacité d'autofinancement**
+
+-   Pas d'effet croisé avec groupe
+
+-   être une coopérative entraîne une diminution de 7,4% pour les micros entreprises
+
+-   être une coopérative entraîne une diminution de 3,3% pour les PME, ETI et grandes entreprises
+
+------------------------------------------------------------------------
+
+**Effet de coopérative sur l'investissement**
+
+-   être une coopérative entraîne une diminution de 8,7% pour les micros entreprises indépendantes
+
+-   être une coopérative entraîne une diminution de 5,9% pour les micros entreprises appartenant à un groupe
+
+-   être une coopérative entraîne une diminution de 4,4% pour les PME, ETI et grandes entreprises n'appartenant pas à un groupe
+
+-   être une coopérative entraîne une diminution de 1,6% pour les PME, ETI et grandes entreprises appartenant à un groupe
+
+# 4-Suite de l'étude
+
+-   Ajout des dernières variables de contrôles
+
+-   Récupérer les données d'au moins l'année 2021 pour y voir une évolution
+
+-   Réaliser une analyse économétrique plus poussée avec des données en panel
+
+-   Essayer aussi des modèles plus adapter pour les indicateurs financiers (Zero-One Inflated Beta)
+
+# 5-Présentation de l'application shiny
+
+<https://doria.shinyapps.io/application_iaa/>
